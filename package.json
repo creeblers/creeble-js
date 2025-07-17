@@ -1,0 +1,31 @@
+{
+  "name": "creeble-js",
+  "version": "1.0.0",
+  "description": "JavaScript SDK for interacting with the Creeble API",
+  "main": "src/index.js",
+  "module": "src/index.js",
+  "type": "module",
+  "keywords": [
+    "creeble",
+    "api",
+    "sdk",
+    "javascript",
+    "notion",
+    "data"
+  ],
+  "author": "Creeble Team",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "files": [
+    "src/",
+    "examples/",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

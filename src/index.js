@@ -22,4 +22,6 @@ export {
 } from './exceptions/index.js';
 
 // Default export
+import { Creeble } from './Creeble.js';
+
 export default Creeble;

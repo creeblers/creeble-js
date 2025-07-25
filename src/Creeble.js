@@ -6,7 +6,7 @@ import { Projects } from './endpoints/Projects.js';
  * Main Creeble API client class
  */
 export class Creeble {
-    constructor(apiKey, baseUrl = 'https://api.creeble.io', options = {}) {
+    constructor(apiKey, baseUrl = 'https://creeble.io', options = {}) {
         if (!apiKey) {
             throw new Error('API key is required');
         }

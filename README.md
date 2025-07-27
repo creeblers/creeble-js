@@ -107,6 +107,61 @@ try {
 }
 ```
 
+## Forms
+
+Submit data to Creeble forms (databases with bracketed titles like [Contact Form]).
+
+### Get Form Information
+```javascript
+// Get form schema and settings
+const form = await client.forms.getForm('project-endpoint', 'contact');
+console.log(form.schema); // Field definitions
+console.log(form.form_settings); // Form configuration
+```
+
+### Submit Form Data
+```javascript
+// Simple form submission
+const response = await client.forms.submit('project-endpoint', 'contact', {
+    name: 'John Doe',
+    email: 'john@example.com',
+    message: 'Hello!'
+});
+
+console.log('Submission ID:', response.submission_id);
+```
+
+### Submit with Validation
+```javascript
+// Validate before submitting
+try {
+    const response = await client.forms.submitWithValidation('project-endpoint', 'contact', {
+        name: 'Jane Doe',
+        email: 'jane@example.com',
+        phone: '+1234567890'
+    });
+    console.log('Form submitted successfully!');
+} catch (error) {
+    if (error.errors) {
+        console.error('Validation errors:', error.errors);
+    }
+}
+```
+
+### Working with Form Model
+```javascript
+// Use the Form model for easier access
+const formData = await client.forms.getForm('project-endpoint', 'contact');
+const form = new Form(formData);
+
+console.log('Form name:', form.name);
+console.log('Required fields:', form.getRequiredFields());
+console.log('Is email required?', form.isFieldRequired('email'));
+
+// Get empty form template
+const template = form.getEmptyFormData();
+```
+
 ## API Reference
 
 ### Creeble Class
@@ -115,6 +170,11 @@ Main client class for interacting with the Creeble API.
 
 #### Constructor
 - `new Creeble(apiKey, baseUrl?, options?)`
+
+#### Properties
+- `data` - Data endpoint methods
+- `projects` - Project information methods
+- `forms` - Form submission methods
 
 #### Methods
 - `ping()` - Test API connection
@@ -126,11 +186,14 @@ Main client class for interacting with the Creeble API.
 Access data endpoints.
 
 #### Methods
-- `get(endpoint, params?)` - Get all data
-- `getById(endpoint, id)` - Get item by ID
+- `list(endpoint, params?)` - Get all data
+- `get(endpoint, id)` - Get item by ID
 - `paginate(endpoint, page?, limit?, params?)` - Get paginated data
 - `search(endpoint, query, params?)` - Search data
-- `filter(endpoint, filters?, params?)` - Filter data
+- `filter(endpoint, filters?)` - Filter data
+- `sortBy(endpoint, field, direction?, filters?)` - Sort data
+- `recent(endpoint, limit?)` - Get recent items
+- `exists(endpoint, id)` - Check if item exists
 
 ### Projects Class
 
@@ -140,6 +203,17 @@ Access project information.
 - `info()` - Get project information
 - `endpoints()` - Get available endpoints
 
+### Forms Class
+
+Handle form submissions.
+
+#### Methods
+- `getForm(endpoint, formSlug)` - Get form schema and settings
+- `submit(endpoint, formSlug, formData)` - Submit form data
+- `getSchema(endpoint, formSlug)` - Get form schema only
+- `submitWithValidation(endpoint, formSlug, formData)` - Submit with client-side validation
+- `validateFormData(schema, formData)` - Validate form data locally
+
 ## Models
 
 ### DataItem
@@ -147,6 +221,31 @@ Represents a data item with helper methods.
 
 ### ProjectInfo
 Represents project information with helper methods.
+
+### Form
+Represents a form configuration with schema and settings.
+
+#### Properties
+- `name` - Form name
+- `slug` - Form URL slug
+- `isEnabled` - Whether form is enabled
+- `schema` - Form field schema
+- `fields` - Form field definitions
+- `settings` - Form configuration settings
+- `successMessage` - Success message text
+- `submitButtonText` - Submit button text
+- `description` - Form description
+- `requiresCaptcha` - Whether captcha is required
+
+#### Methods
+- `getRequiredFields()` - Get array of required field names
+- `getField(fieldName)` - Get field definition
+- `hasField(fieldName)` - Check if field exists
+- `getFieldType(fieldName)` - Get field type
+- `isFieldRequired(fieldName)` - Check if field is required
+- `getFieldOptions(fieldName)` - Get options for select/multi-select fields
+- `getEmptyFormData()` - Generate empty form data object
+- `toObject()` - Convert to plain object
 
 ## Examples
 

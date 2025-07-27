@@ -7,11 +7,13 @@ export { Client } from './http/Client.js';
 // Endpoints
 export { Data } from './endpoints/Data.js';
 export { Projects } from './endpoints/Projects.js';
+export { Forms } from './endpoints/Forms.js';
 
 // Models
 export { BaseModel } from './models/BaseModel.js';
 export { DataItem } from './models/DataItem.js';
 export { ProjectInfo } from './models/ProjectInfo.js';
+export { Form } from './models/Form.js';
 
 // Exceptions
 export {

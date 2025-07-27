@@ -1,6 +1,7 @@
 import { Client } from './http/Client.js';
 import { Data } from './endpoints/Data.js';
 import { Projects } from './endpoints/Projects.js';
+import { Forms } from './endpoints/Forms.js';
 
 /**
  * Main Creeble API client class
@@ -14,6 +15,7 @@ export class Creeble {
         this.client = new Client(apiKey, baseUrl, options);
         this.data = new Data(this.client);
         this.projects = new Projects(this.client);
+        this.forms = new Forms(this.client);
     }
 
     /**

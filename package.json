@@ -22,7 +22,6 @@
   "devDependencies": {},
   "files": [
     "src/",
-    "examples/",
     "README.md"
   ],
   "engines": {

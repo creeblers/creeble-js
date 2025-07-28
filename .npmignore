@@ -1,0 +1,52 @@
+# Development files
+.git
+.gitignore
+.github
+.vscode
+.idea
+*.log
+*.tmp
+.DS_Store
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.spec.js
+
+# Documentation source files
+docs/
+README.md
+examples/
+
+# Build artifacts
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Config files
+.eslintrc*
+.prettierrc*
+.babelrc*
+jest.config.*
+tsconfig.json
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+.circleci/
+.github/
+
+# Environment files
+.env
+.env.*
+
+# Lock files (keep package-lock.json)
+yarn.lock
+pnpm-lock.yaml
+
+# Temporary files
+tmp/
+temp/

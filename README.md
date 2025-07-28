@@ -4,10 +4,8 @@ A JavaScript SDK for interacting with the Creeble API.
 
 ## Installation
 
-Since this is a local package, you can import it directly:
-
-```javascript
-import { Creeble } from './src/index.js';
+```bash
+npm install creeble-js
 ```
 
 ## Quick Start

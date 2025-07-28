@@ -49,6 +49,18 @@ async function basicExample() {
         const recentData = await client.data.recent('your-endpoint-name', 5);
         console.log('Recent Data:', recentData);
 
+        // Find single item by field value
+        const aboutPage = await client.data.findBy('your-endpoint-name', 'slug', 'about');
+        console.log('About Page:', aboutPage);
+
+        // Find specific page by field
+        const publishedPost = await client.data.findPageBy('your-endpoint-name', 'status', 'published');
+        console.log('Published Post:', publishedPost);
+
+        // Find specific row by field
+        const activeProduct = await client.data.findRowBy('your-endpoint-name', 'status', 'active');
+        console.log('Active Product:', activeProduct);
+
     } catch (error) {
         console.error('Error:', error.message);
         
@@ -84,6 +96,14 @@ async function endpointExample() {
         // Sort products by price
         const sortedProducts = await endpoint.sortBy('price', 'asc');
         console.log('Sorted Products:', sortedProducts);
+        
+        // Find product by SKU
+        const productBySku = await endpoint.findBy('sku', 'LAPTOP-001');
+        console.log('Product by SKU:', productBySku);
+        
+        // Find featured product
+        const featuredProduct = await endpoint.findRowBy('featured', 'true');
+        console.log('Featured Product:', featuredProduct);
         
     } catch (error) {
         console.error('Error:', error.message);

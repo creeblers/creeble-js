@@ -68,13 +68,27 @@ const filtered = await client.data.filter('endpoint-name', {
 });
 ```
 
+### Find by Field Value
+```javascript
+// Find a single item by field value
+const aboutPage = await client.data.findBy('endpoint-name', 'slug', 'about');
+
+// Find a specific page by field
+const publishedPost = await client.data.findPageBy('endpoint-name', 'status', 'published');
+
+// Find a specific row by field
+const activeProduct = await client.data.findRowBy('endpoint-name', 'status', 'active');
+```
+
 ### Using Endpoint Helper
 ```javascript
 const endpoint = client.endpoint('products');
 
-const products = await endpoint.get();
-const product = await endpoint.getById('123');
+const products = await endpoint.list();
+const product = await endpoint.get('123');
 const searchResults = await endpoint.search('laptop');
+const productBySku = await endpoint.findBy('sku', 'LAPTOP-001');
+const featuredProduct = await endpoint.findRowBy('featured', 'true');
 ```
 
 ## Project Information
@@ -191,6 +205,9 @@ Access data endpoints.
 - `filter(endpoint, filters?)` - Filter data
 - `sortBy(endpoint, field, direction?, filters?)` - Sort data
 - `recent(endpoint, limit?)` - Get recent items
+- `findBy(endpoint, field, value, type?)` - Find single item by field value
+- `findPageBy(endpoint, field, value)` - Find single page by field value
+- `findRowBy(endpoint, field, value)` - Find single row by field value
 - `exists(endpoint, id)` - Check if item exists
 
 ### Projects Class

@@ -44,6 +44,9 @@ export class Creeble {
             filter: (filters) => this.data.filter(name, filters),
             sortBy: (field, direction = 'asc', filters = {}) => this.data.sortBy(name, field, direction, filters),
             recent: (limit = 10) => this.data.recent(name, limit),
+            findBy: (field, value, type = 'pages') => this.data.findBy(name, field, value, type),
+            findPageBy: (field, value) => this.data.findPageBy(name, field, value),
+            findRowBy: (field, value) => this.data.findRowBy(name, field, value),
             exists: (id) => this.data.exists(name, id)
         };
     }

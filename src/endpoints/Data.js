@@ -69,6 +69,44 @@ export class Data {
     }
 
     /**
+     * Find a single item by field value
+     */
+    async findBy(endpoint, field, value, type = 'pages') {
+        const params = {
+            find_by: `${field}:${value}`,
+            type
+        };
+        
+        const response = await this.list(endpoint, params);
+        
+        // If single result returned directly, return it
+        if (response.data && !Array.isArray(response.data)) {
+            return response.data;
+        }
+        
+        // If array returned, return first item or null
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+            return response.data[0];
+        }
+        
+        return null;
+    }
+
+    /**
+     * Find a single page by field value
+     */
+    async findPageBy(endpoint, field, value) {
+        return await this.findBy(endpoint, field, value, 'pages');
+    }
+
+    /**
+     * Find a single row by field value
+     */
+    async findRowBy(endpoint, field, value) {
+        return await this.findBy(endpoint, field, value, 'rows');
+    }
+
+    /**
      * Check if an item exists
      */
     async exists(endpoint, id) {

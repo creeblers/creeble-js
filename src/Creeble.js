@@ -53,7 +53,13 @@ export class Creeble {
             getDatabases: () => this.getDatabases(name),
             getDatabaseNames: () => this.getDatabaseNames(name),
             getRowByField: (databaseName, field, value) => this.getRowByField(name, databaseName, field, value),
-            getAllRows: () => this.getAllRows(name)
+            getAllRows: () => this.getAllRows(name),
+            // Pagination helpers
+            getAllPages: (filters = {}, limit = 20) => this.data.getAllPages(name, filters, limit),
+            getNextPage: (currentResponse, filters = {}) => this.data.getNextPage(currentResponse, filters),
+            getPrevPage: (currentResponse, filters = {}) => this.data.getPrevPage(currentResponse, filters),
+            hasMorePages: (response) => this.data.hasMorePages(response),
+            isLastPage: (response) => this.data.isLastPage(response)
         };
     }
 

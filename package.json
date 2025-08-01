@@ -1,6 +1,6 @@
 {
   "name": "creeble-js",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "JavaScript SDK for interacting with the Creeble API - Transform your Notion data into powerful APIs",
   "main": "src/index.js",
   "module": "src/index.js",

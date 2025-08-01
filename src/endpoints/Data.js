@@ -45,16 +45,18 @@ export class Data {
      * Get all pages by automatically paginating through results
      * @param {string} endpoint - The endpoint name
      * @param {Object} filters - Additional filters to apply
-     * @param {number} limit - Items per page (default: 20)
+     * @param {number} limit - Items per page (default: 25, max supported by backend)
      * @returns {Promise<Array>} All items from all pages
      */
-    async getAllPages(endpoint, filters = {}, limit = 20) {
+    async getAllPages(endpoint, filters = {}, limit = 25) {
+        // Use maximum limit for fewer requests
+        const optimizedLimit = Math.min(limit, 25);
         let allItems = [];
         let currentPage = 1;
         let hasMorePages = true;
 
         while (hasMorePages) {
-            const response = await this.paginate(endpoint, currentPage, limit, filters);
+            const response = await this.paginate(endpoint, currentPage, optimizedLimit, filters);
             
             if (response.data && Array.isArray(response.data)) {
                 allItems = allItems.concat(response.data);
@@ -66,8 +68,58 @@ export class Data {
                 currentPage = response.pagination.next_page || currentPage + 1;
             } else {
                 // Fallback for older API responses
-                hasMorePages = response.data && response.data.length === limit;
+                hasMorePages = response.data && response.data.length === optimizedLimit;
                 currentPage++;
+            }
+        }
+
+        return allItems;
+    }
+
+    /**
+     * Get all pages with concurrent requests (FASTEST for large datasets)
+     * @param {string} endpoint - The endpoint name
+     * @param {Object} filters - Additional filters to apply
+     * @param {number} maxConcurrent - Maximum concurrent requests (default: 3)
+     * @returns {Promise<Array>} All items from all pages
+     */
+    async getAllPagesConcurrent(endpoint, filters = {}, maxConcurrent = 3) {
+        // First request to get total count
+        const firstResponse = await this.paginate(endpoint, 1, 25, filters);
+        const firstPageData = firstResponse.data || [];
+        
+        // If no pagination info or only one page, return first page
+        if (!firstResponse.pagination || firstResponse.pagination.is_last_page) {
+            return firstPageData;
+        }
+
+        const totalPages = firstResponse.pagination.last_page;
+        const allItems = [...firstPageData];
+
+        // Create requests for remaining pages
+        const remainingPages = [];
+        for (let page = 2; page <= totalPages; page++) {
+            remainingPages.push(page);
+        }
+
+        // Process pages in concurrent batches
+        for (let i = 0; i < remainingPages.length; i += maxConcurrent) {
+            const batch = remainingPages.slice(i, i + maxConcurrent);
+            const batchPromises = batch.map(page => 
+                this.paginate(endpoint, page, 25, filters)
+            );
+
+            try {
+                const batchResponses = await Promise.all(batchPromises);
+                batchResponses.forEach(response => {
+                    if (response.data && Array.isArray(response.data)) {
+                        allItems.push(...response.data);
+                    }
+                });
+            } catch (error) {
+                // If concurrent requests fail, fall back to sequential
+                console.warn('Concurrent pagination failed, falling back to sequential:', error.message);
+                return this.getAllPages(endpoint, filters);
             }
         }
 
@@ -217,6 +269,71 @@ export class Data {
             return true;
         } catch (error) {
             return false;
+        }
+    }
+
+    /**
+     * Get lightweight data (IDs and titles only) for fast loading
+     * @param {string} endpoint - The endpoint name
+     * @param {Object} filters - Additional filters to apply
+     * @returns {Promise<Object>} API response with minimal data
+     */
+    async listLightweight(endpoint, filters = {}) {
+        return await this.list(endpoint, {
+            ...filters,
+            fields: 'id,title' // Only fetch essential fields
+        });
+    }
+
+    /**
+     * Get items with specific fields only (optimizes payload size)
+     * @param {string} endpoint - The endpoint name
+     * @param {string[]} fields - Array of field names to include
+     * @param {Object} filters - Additional filters to apply
+     * @returns {Promise<Object>} API response with selected fields
+     */
+    async listFields(endpoint, fields, filters = {}) {
+        return await this.list(endpoint, {
+            ...filters,
+            fields: Array.isArray(fields) ? fields.join(',') : fields
+        });
+    }
+
+    /**
+     * Smart pagination: Automatically chooses best strategy based on dataset size
+     * @param {string} endpoint - The endpoint name
+     * @param {Object} filters - Additional filters to apply
+     * @param {Object} options - Options { preferConcurrent: boolean, maxItems: number }
+     * @returns {Promise<Array>} All items using optimal strategy
+     */
+    async getAllPagesOptimized(endpoint, filters = {}, options = {}) {
+        const { preferConcurrent = true, maxItems = 1000 } = options;
+        
+        // First, get a lightweight check to see total count
+        const firstResponse = await this.paginate(endpoint, 1, 25, {
+            ...filters,
+            fields: 'id' // Minimal payload for counting
+        });
+
+        if (!firstResponse.pagination) {
+            // No pagination info, just return the data
+            return await this.getAllPages(endpoint, filters);
+        }
+
+        const totalItems = firstResponse.pagination.total;
+        const totalPages = firstResponse.pagination.last_page;
+
+        // Choose strategy based on dataset size
+        if (totalItems > maxItems) {
+            throw new Error(`Dataset too large (${totalItems} items). Consider using pagination or filtering.`);
+        }
+
+        if (totalPages <= 3 || !preferConcurrent) {
+            // Small dataset or sequential preferred - use sequential
+            return await this.getAllPages(endpoint, filters);
+        } else {
+            // Larger dataset - use concurrent requests
+            return await this.getAllPagesConcurrent(endpoint, filters);
         }
     }
 }

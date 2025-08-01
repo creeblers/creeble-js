@@ -119,11 +119,16 @@ export class Creeble {
             getRowByField: (databaseName, field, value) => this.getRowByField(name, databaseName, field, value),
             getAllRows: () => this.getAllRows(name),
             // Pagination helpers
-            getAllPages: (filters = {}, limit = 20) => this.data.getAllPages(name, filters, limit),
+            getAllPages: (filters = {}, limit = 25) => this.data.getAllPages(name, filters, limit),
+            getAllPagesConcurrent: (filters = {}, maxConcurrent = 3) => this.data.getAllPagesConcurrent(name, filters, maxConcurrent),
+            getAllPagesOptimized: (filters = {}, options = {}) => this.data.getAllPagesOptimized(name, filters, options),
             getNextPage: (currentResponse, filters = {}) => this.data.getNextPage(currentResponse, filters),
             getPrevPage: (currentResponse, filters = {}) => this.data.getPrevPage(currentResponse, filters),
             hasMorePages: (response) => this.data.hasMorePages(response),
-            isLastPage: (response) => this.data.isLastPage(response)
+            isLastPage: (response) => this.data.isLastPage(response),
+            // Performance helpers
+            listLightweight: (filters = {}) => this.data.listLightweight(name, filters),
+            listFields: (fields, filters = {}) => this.data.listFields(name, fields, filters)
         };
     }
 

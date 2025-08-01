@@ -91,6 +91,95 @@ const productBySku = await endpoint.findBy('sku', 'LAPTOP-001');
 const featuredProduct = await endpoint.findRowBy('featured', 'true');
 ```
 
+## Database Helpers
+
+Work with Notion databases more easily using these helper methods.
+
+### Get Rows by Database
+```javascript
+// Get all posts from the 'Posts' database
+const posts = await client.getRowsByDatabase('endpoint-name', 'Posts');
+
+// Get all products from the 'Products' database
+const products = await client.getRowsByDatabase('endpoint-name', 'Products');
+```
+
+### Get Available Databases
+```javascript
+// Get database names
+const databaseNames = await client.getDatabaseNames('endpoint-name');
+// Returns: ['Posts', 'Pages', 'Products', 'Categories']
+
+// Get full database information
+const databases = await client.getDatabases('endpoint-name');
+```
+
+### Find Row by Field
+```javascript
+// Find a specific post by slug
+const post = await client.getRowByField('endpoint-name', 'Posts', 'slug', 'my-post-slug');
+
+// Find a product by SKU
+const product = await client.getRowByField('endpoint-name', 'Products', 'sku', 'LAPTOP-001');
+```
+
+### Get All Rows
+```javascript
+// Get all rows from all databases
+const allRows = await client.getAllRows('endpoint-name');
+
+// Filter by database
+const posts = allRows.filter(row => row.database === 'Posts');
+```
+
+### Transform Data
+```javascript
+// Simplify Notion data structure
+const posts = await client.getRowsByDatabase('endpoint-name', 'Posts');
+const simplePosts = posts.map(post => Creeble.simplifyItem(post));
+
+// Example simplified structure:
+// {
+//   id: '...',
+//   title: 'My Post',
+//   slug: 'my-post',
+//   excerpt: 'Post excerpt...',
+//   content: '<p>HTML content</p>',
+//   published_date: '2023-01-01'
+// }
+```
+
+### Endpoint Helper with Database Methods
+```javascript
+const endpoint = client.endpoint('my-endpoint');
+
+// Use database helpers via endpoint
+const posts = await endpoint.getRowsByDatabase('Posts');
+const post = await endpoint.getRowByField('Posts', 'slug', 'my-slug');
+const databaseNames = await endpoint.getDatabaseNames();
+const allRows = await endpoint.getAllRows();
+```
+
+### Complete Blog Example
+```javascript
+import { Creeble } from 'creeble-js';
+
+const client = new Creeble('napi_your_api_key');
+const endpoint = 'my-blog-endpoint';
+
+// Get all published posts
+const posts = await client.getRowsByDatabase(endpoint, 'Posts');
+const publishedPosts = posts
+  .filter(post => post.properties?.published?.value)
+  .map(post => Creeble.simplifyItem(post));
+
+// Get a specific post
+const post = await client.getRowByField(endpoint, 'Posts', 'slug', 'my-post');
+
+// Get available content types
+const contentTypes = await client.getDatabaseNames(endpoint);
+```
+
 ## Project Information
 
 ```javascript

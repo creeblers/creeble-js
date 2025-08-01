@@ -47,7 +47,98 @@ export class Creeble {
             findBy: (field, value, type = 'pages') => this.data.findBy(name, field, value, type),
             findPageBy: (field, value) => this.data.findPageBy(name, field, value),
             findRowBy: (field, value) => this.data.findRowBy(name, field, value),
-            exists: (id) => this.data.exists(name, id)
+            exists: (id) => this.data.exists(name, id),
+            // New helper methods
+            getRowsByDatabase: (databaseName) => this.getRowsByDatabase(name, databaseName),
+            getDatabases: () => this.getDatabases(name),
+            getDatabaseNames: () => this.getDatabaseNames(name),
+            getRowByField: (databaseName, field, value) => this.getRowByField(name, databaseName, field, value),
+            getAllRows: () => this.getAllRows(name)
         };
+    }
+
+    /**
+     * Get all rows from a specific database by name
+     * @param {string} endpoint - The endpoint name
+     * @param {string} databaseName - The database name (e.g., 'Posts', 'Pages', 'Products', etc.)
+     * @returns {Promise<Array>} Array of rows from the specified database
+     */
+    async getRowsByDatabase(endpoint, databaseName) {
+        const response = await this.data.list(endpoint, { type: 'rows' });
+        const rows = response.data || [];
+        return rows.filter(row => row.database === databaseName);
+    }
+
+    /**
+     * Get all available databases in an endpoint
+     * @param {string} endpoint - The endpoint name
+     * @returns {Promise<Array>} Array of database schemas
+     */
+    async getDatabases(endpoint) {
+        const response = await this.data.list(endpoint, { type: 'pages' });
+        return response.data || [];
+    }
+
+    /**
+     * Get database names from an endpoint
+     * @param {string} endpoint - The endpoint name
+     * @returns {Promise<Array>} Array of database names
+     */
+    async getDatabaseNames(endpoint) {
+        const databases = await this.getDatabases(endpoint);
+        return databases.map(db => db.title);
+    }
+
+    /**
+     * Get a single row by field value from a specific database
+     * @param {string} endpoint - The endpoint name
+     * @param {string} databaseName - The database name
+     * @param {string} field - The field name to search by
+     * @param {any} value - The value to search for
+     * @returns {Promise<Object|null>} The found row or null
+     */
+    async getRowByField(endpoint, databaseName, field, value) {
+        const rows = await this.getRowsByDatabase(endpoint, databaseName);
+        return rows.find(row => {
+            const fieldValue = row.properties?.[field]?.value;
+            return fieldValue === value;
+        }) || null;
+    }
+
+    /**
+     * Get all rows (all databases combined)
+     * @param {string} endpoint - The endpoint name
+     * @returns {Promise<Array>} Array of all rows
+     */
+    async getAllRows(endpoint) {
+        const response = await this.data.list(endpoint, { type: 'rows' });
+        return response.data || [];
+    }
+
+    /**
+     * Transform Notion properties to a simpler format
+     * @param {Object} item - The raw item from the API
+     * @returns {Object} Simplified item
+     */
+    static simplifyItem(item) {
+        const simplified = {
+            id: item.id,
+            title: item.title,
+            database: item.database,
+            database_id: item.database_id,
+            content: item.html_content,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            notion_url: item.notion_url
+        };
+
+        // Flatten properties
+        if (item.properties) {
+            Object.entries(item.properties).forEach(([key, prop]) => {
+                simplified[key] = prop.value || prop.html || null;
+            });
+        }
+
+        return simplified;
     }
 }

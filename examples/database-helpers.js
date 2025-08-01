@@ -14,13 +14,28 @@ async function exampleDatabaseHelpers() {
         console.log('Available databases:', databaseNames);
         console.log();
 
-        // 2. Get all rows from a specific database
+        // 2. Get all rows from a specific database (EFFICIENT - server-side filtering)
         console.log('2. Getting rows from Posts database...');
         const posts = await client.getRowsByDatabase(endpointName, 'Posts');
         console.log(`Found ${posts.length} posts`);
         posts.forEach(post => {
             console.log(`- ${post.title} (${post.properties?.slug?.value || 'no-slug'})`);
         });
+        console.log();
+
+        // 2a. Get paginated rows from a specific database
+        console.log('2a. Getting paginated rows from Posts database...');
+        const paginatedPosts = await client.getRowsByDatabasePaginated(endpointName, 'Posts', {
+            page: 1,
+            limit: 5
+        });
+        console.log(`Page 1 of Posts: ${paginatedPosts.data.length} items, Total: ${paginatedPosts.pagination?.total || 'unknown'}`);
+        console.log();
+
+        // 2b. Get ALL rows from a specific database across all pages
+        console.log('2b. Getting ALL rows from Posts database across all pages...');
+        const allPosts = await client.getAllRowsByDatabase(endpointName, 'Posts');
+        console.log(`Total posts across all pages: ${allPosts.length}`);
         console.log();
 
         // 3. Get a specific row by field

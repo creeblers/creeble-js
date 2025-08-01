@@ -2,6 +2,8 @@ import { Client } from './http/Client.js';
 import { Data } from './endpoints/Data.js';
 import { Projects } from './endpoints/Projects.js';
 import { Forms } from './endpoints/Forms.js';
+import { logger } from './utils/Logger.js';
+import { defaultRetryHandler } from './utils/RetryHandler.js';
 
 /**
  * Main Creeble API client class
@@ -12,10 +14,70 @@ export class Creeble {
             throw new Error('API key is required');
         }
 
+        // Configure logging
+        if (options.debug) {
+            logger.setEnabled(true);
+            logger.setLevel(options.logLevel || 'debug');
+        }
+
+        // Store configuration
+        this.config = {
+            apiKey,
+            baseUrl,
+            debug: options.debug || false,
+            ...options
+        };
+
         this.client = new Client(apiKey, baseUrl, options);
         this.data = new Data(this.client);
         this.projects = new Projects(this.client);
         this.forms = new Forms(this.client);
+        this.logger = logger;
+        this.retryHandler = options.retryHandler || defaultRetryHandler;
+
+        // Setup default request/response interceptors
+        this.setupDefaultInterceptors();
+    }
+
+    /**
+     * Setup default interceptors for logging and retry
+     */
+    setupDefaultInterceptors() {
+        // Request logging interceptor
+        this.client.addRequestInterceptor(async ({ url, options }) => {
+            this.logger.logRequest(options.method || 'GET', url.toString());
+            return { url, options };
+        });
+
+        // Response logging interceptor
+        this.client.addResponseInterceptor((response) => {
+            // Log successful responses
+            return response;
+        });
+
+        // Error interceptor for retry logic
+        this.client.addErrorInterceptor(async (error) => {
+            this.logger.error('Request failed', error);
+            return error;
+        });
+    }
+
+    /**
+     * Enable/disable debug mode
+     */
+    setDebug(enabled, level = 'debug') {
+        this.config.debug = enabled;
+        this.logger.setEnabled(enabled);
+        if (level) {
+            this.logger.setLevel(level);
+        }
+    }
+
+    /**
+     * Get current configuration
+     */
+    getConfig() {
+        return { ...this.config };
     }
 
     /**
@@ -50,6 +112,8 @@ export class Creeble {
             exists: (id) => this.data.exists(name, id),
             // New helper methods
             getRowsByDatabase: (databaseName) => this.getRowsByDatabase(name, databaseName),
+            getRowsByDatabasePaginated: (databaseName, options = {}) => this.getRowsByDatabasePaginated(name, databaseName, options),
+            getAllRowsByDatabase: (databaseName, filters = {}) => this.getAllRowsByDatabase(name, databaseName, filters),
             getDatabases: () => this.getDatabases(name),
             getDatabaseNames: () => this.getDatabaseNames(name),
             getRowByField: (databaseName, field, value) => this.getRowByField(name, databaseName, field, value),
@@ -70,9 +134,11 @@ export class Creeble {
      * @returns {Promise<Array>} Array of rows from the specified database
      */
     async getRowsByDatabase(endpoint, databaseName) {
-        const response = await this.data.list(endpoint, { type: 'rows' });
-        const rows = response.data || [];
-        return rows.filter(row => row.database === databaseName);
+        const response = await this.data.list(endpoint, { 
+            type: 'rows', 
+            database: databaseName 
+        });
+        return response.data || [];
     }
 
     /**
@@ -104,11 +170,17 @@ export class Creeble {
      * @returns {Promise<Object|null>} The found row or null
      */
     async getRowByField(endpoint, databaseName, field, value) {
-        const rows = await this.getRowsByDatabase(endpoint, databaseName);
-        return rows.find(row => {
-            const fieldValue = row.properties?.[field]?.value;
-            return fieldValue === value;
-        }) || null;
+        // Use server-side filtering when possible
+        try {
+            return await this.data.findBy(endpoint, field, value, 'rows');
+        } catch (error) {
+            // Fallback to database filtering + client-side search
+            const rows = await this.getRowsByDatabase(endpoint, databaseName);
+            return rows.find(row => {
+                const fieldValue = row.properties?.[field]?.value;
+                return fieldValue === value;
+            }) || null;
+        }
     }
 
     /**
@@ -119,6 +191,42 @@ export class Creeble {
     async getAllRows(endpoint) {
         const response = await this.data.list(endpoint, { type: 'rows' });
         return response.data || [];
+    }
+
+    /**
+     * Get all rows from a specific database with pagination support
+     * @param {string} endpoint - The endpoint name
+     * @param {string} databaseName - The database name
+     * @param {Object} options - Additional options (page, limit, filters)
+     * @returns {Promise<Array>} Array of rows from the specified database
+     */
+    async getRowsByDatabasePaginated(endpoint, databaseName, options = {}) {
+        const { page = 1, limit = 20, ...filters } = options;
+        const params = {
+            type: 'rows',
+            database: databaseName,
+            page,
+            limit,
+            ...filters
+        };
+        
+        const response = await this.data.list(endpoint, params);
+        return response;
+    }
+
+    /**
+     * Get ALL rows from a specific database across all pages
+     * @param {string} endpoint - The endpoint name
+     * @param {string} databaseName - The database name
+     * @param {Object} filters - Additional filters
+     * @returns {Promise<Array>} Array of all rows from the specified database
+     */
+    async getAllRowsByDatabase(endpoint, databaseName, filters = {}) {
+        return await this.data.getAllPages(endpoint, { 
+            type: 'rows', 
+            database: databaseName,
+            ...filters 
+        });
     }
 
     /**

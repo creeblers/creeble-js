@@ -165,24 +165,33 @@ export class Data {
      * Find a single item by field value
      */
     async findBy(endpoint, field, value, type = 'pages') {
+        if (!endpoint || !field || value === undefined || value === null) {
+            throw new Error('Endpoint, field, and value are required for findBy');
+        }
+        
         const params = {
             find_by: `${field}:${value}`,
             type
         };
         
-        const response = await this.list(endpoint, params);
-        
-        // If single result returned directly, return it
-        if (response.data && !Array.isArray(response.data)) {
-            return response.data;
+        try {
+            const response = await this.list(endpoint, params);
+            
+            // If single result returned directly, return it
+            if (response.data && !Array.isArray(response.data)) {
+                return response.data;
+            }
+            
+            // If array returned, return first item or null
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+                return response.data[0];
+            }
+            
+            return null;
+        } catch (error) {
+            // Re-throw with more context
+            throw new Error(`Failed to find item by ${field}:${value} in ${endpoint} - ${error.message}`);
         }
-        
-        // If array returned, return first item or null
-        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-            return response.data[0];
-        }
-        
-        return null;
     }
 
     /**

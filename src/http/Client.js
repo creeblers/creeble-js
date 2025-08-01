@@ -11,15 +11,71 @@ export class Client {
             timeout: 30000,
             ...options
         };
+        
+        // Interceptors for request/response middleware
+        this.requestInterceptors = [];
+        this.responseInterceptors = [];
+        this.errorInterceptors = [];
+        
+        // Simple in-memory cache
+        this.cache = new Map();
+        this.cacheEnabled = options.enableCache !== false;
+        this.defaultCacheTTL = options.cacheTTL || 300000; // 5 minutes
+    }
+    
+    /**
+     * Add request interceptor
+     */
+    addRequestInterceptor(interceptor) {
+        this.requestInterceptors.push(interceptor);
+        return this.requestInterceptors.length - 1;
+    }
+    
+    /**
+     * Add response interceptor
+     */
+    addResponseInterceptor(interceptor) {
+        this.responseInterceptors.push(interceptor);
+        return this.responseInterceptors.length - 1;
+    }
+    
+    /**
+     * Add error interceptor
+     */
+    addErrorInterceptor(interceptor) {
+        this.errorInterceptors.push(interceptor);
+        return this.errorInterceptors.length - 1;
+    }
+    
+    /**
+     * Remove interceptor by index
+     */
+    removeInterceptor(type, index) {
+        const interceptors = this[`${type}Interceptors`];
+        if (interceptors && interceptors[index]) {
+            interceptors.splice(index, 1);
+        }
     }
 
     /**
      * Make a GET request
      */
     async get(uri, params = {}) {
+        if (typeof uri !== 'string') {
+            throw new CreebleException('URI must be a string');
+        }
+        
         const url = new URL(`${this.baseUrl}/api${uri}`);
         if (Object.keys(params).length > 0) {
-            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+            Object.keys(params).forEach(key => {
+                const value = params[key];
+                // Handle arrays and objects properly
+                if (Array.isArray(value)) {
+                    value.forEach(v => url.searchParams.append(`${key}[]`, v));
+                } else if (value !== null && value !== undefined) {
+                    url.searchParams.append(key, String(value));
+                }
+            });
         }
 
         return this.makeRequest('GET', url);

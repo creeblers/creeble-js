@@ -1,30 +1,57 @@
 {
   "name": "creeble-js",
-  "version": "0.2.1",
-  "description": "JavaScript SDK for interacting with the Creeble API",
+  "version": "0.3.0",
+  "description": "JavaScript SDK for interacting with the Creeble API - Transform your Notion data into powerful APIs",
   "main": "src/index.js",
   "module": "src/index.js",
+  "types": "src/types.d.ts",
   "type": "module",
   "keywords": [
     "creeble",
     "api",
     "sdk",
     "javascript",
+    "typescript",
     "notion",
-    "data"
+    "data",
+    "cms",
+    "headless",
+    "database"
   ],
   "author": "Creeble Team",
   "license": "MIT",
+  "homepage": "https://creeble.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/creeble/creeble-js"
+  },
+  "bugs": {
+    "url": "https://github.com/creeble/creeble-js/issues"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "echo \"No build step required for ES modules\"",
+    "lint": "eslint src/",
+    "format": "prettier --write src/"
   },
   "dependencies": {},
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^2.0.0"
+  },
   "files": [
     "src/",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "engines": {
     "node": ">=14.0.0"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "import": "./src/index.js",
+      "types": "./src/types.d.ts"
+    }
   }
 }
